@@ -32,7 +32,6 @@
         test_command: uptime
       when: reboot_required_file.stat.exists
 
-    # todo: github pat to secrets before pushing
     # get all git repos
     - name: Install Git
       become: true
@@ -192,7 +191,7 @@
       become_user: root
       ansible.builtin.apt_repository:
         repo: >-
-          deb [arch={{ ansible_architecture | lower }} signed-by=/etc/apt/keyrings/docker.asc]
+          deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture | lower }} signed-by=/etc/apt/keyrings/docker.asc]
           https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
         filename: docker
         state: present
@@ -210,3 +209,19 @@
         name: docker.io
         state: latest
         force_apt_get: true
+
+    - name: Install docker-compose-plugin
+      become: true
+      become_user: root
+      ansible.builtin.apt:
+        name: docker-compose-plugin
+        state: latest
+        force_apt_get: true
+
+    - name: Add robot user to docker group
+      become: true
+      become_user: root
+      ansible.builtin.user:
+        name: robot
+        groups: docker
+        append: true
